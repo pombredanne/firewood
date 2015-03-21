@@ -6,6 +6,7 @@ import sys
 from importlib import import_module
 from mapletree import MapleTree, rsp
 from mapletree.driver import Driver
+from mapletree.request import Request
 from mapletree.routetree import ExceptionTree, RequestTree
 from mapletree.signing import Signing
 from . import logger
@@ -14,9 +15,6 @@ from . import logger
 class Firewood(object):
     def __init__(self):
         self.mapletree = MapleTree()
-
-        self.config_package = 'config'
-        self.config_stage_f = lambda: os.environ.get('STAGE', 'development')
 
         self.req_reusables = {'': set(['firewood.default.req'])}
         self.exc_reusables = set(['firewood.default.exc'])
@@ -41,6 +39,14 @@ class Firewood(object):
     def rsp(self):
         return rsp()
 
+    @property
+    def config(self):
+        return self.mapletree.config
+
+    @property
+    def thread(self):
+        return self.mapletree.thread
+
     def __call__(self, environ, start_response):
         try:
             return self.mapletree(environ, start_response)
@@ -60,27 +66,28 @@ class Firewood(object):
         else:
             driver.run()
 
+    def load_config(self, pkgname='config', stage=None):
+        stage_f = stage or (lambda: os.environ.get('STAGE', 'development'))
+
+        try:
+            self.mapletree.config.load_package(pkgname)
+            self.mapletree.config.stage = stage_f()
+
+        except ImportError as e:
+            fmt = 'Failed to load config package `{}`'
+            logger.w(fmt.format(pkgname))
+            logger.tb()
+
     def build(self):
         caller_name = inspect.getmodule(inspect.stack()[1][0]).__name__
         if caller_name == '__main__' and not Driver.is_stub_proc():
             return
 
         logger.i('Start building app')
-        self._build_config()
         self._build_reusables()
         self._build_autoloads()
         self._build_head_methods()
         self._build_options_methods()
-
-    def _build_config(self):
-        try:
-            self.mapletree.config.load_package(self.config_package)
-            self.mapletree.config.stage = self.config_stage_f()
-
-        except ImportError as e:
-            fmt = 'Failed to load config package `{}`'
-            logger.w(fmt, self.config_pkg)
-            logger.tb()
 
     def _build_reusables(self):
         for prefix, seq in self.req_reusables.items():
@@ -171,3 +178,6 @@ class Firewood(object):
 
     def exc(self, exc_cls):
         return self.mapletree.exc(exc_cls)
+
+    def validator(self, f):
+        return Request.validator
