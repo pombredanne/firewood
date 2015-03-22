@@ -5,14 +5,14 @@ from mapletree.request import Request, VDict
 from mapletree.response import Response
 
 
-def _(req):
+def request_session(req):
     return VDict(fw.signing.unsign(req.cookie('SESSION', default='')))
 
 
 setattr(Request, 'session', _)
 
 
-def _(rsp, data, expires=None, domain=None, secure=False):
+def response_session(rsp, data, expires=None, domain=None, secure=False):
     return rsp.cookie('SESSION',
                       fw.signing.sign(data),
                       expires,
@@ -22,3 +22,7 @@ def _(rsp, data, expires=None, domain=None, secure=False):
 
 
 setattr(Response, 'session', _)
+
+
+def response_clear_session(rsp):
+    return rsp.clear_cookie('SESSION')
