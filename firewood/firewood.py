@@ -24,6 +24,8 @@ class Firewood(object):
         self.session_key = None
         self._signing = None
 
+        self.request_route_context = ''
+
     @property
     def signing(self):
         if self._signing is None:
@@ -121,14 +123,14 @@ class Firewood(object):
         self.mapletree.req.merge(rtree, prefix)
         for k, v in rtree.items():
             path = prefix + '/' + '/'.join(k)
-            msg = 'Merged request endpoint `{}` for `{}`'.format(v, path)
+            msg = 'Merged request endpoints `{}` for `{}`'.format(v, path)
             logger.i(msg)
 
     def _build_reusables_exception(self, etree):
         self.mapletree.exc.merge(etree)
         for k, v in etree.items():
             path = '/' + '/'.join(k)
-            msg = 'Merged exception endpoint `{}` for `{}`'.format(v, path)
+            msg = 'Merged an exception endpoint `{}` for `{}`'.format(v, path)
             logger.i(msg)
 
     def _build_autoloads(self):
@@ -155,29 +157,45 @@ class Firewood(object):
 
             self.mapletree.req.options('/' + '/'.join(k))(_)
 
-    def get(self, path):
-        return self.mapletree.req.get(path)
+    def get(self, path=''):
+        return self.req('get', path)
 
-    def post(self, path):
-        return self.mapletree.req.post(path)
+    def post(self, path=''):
+        return self.req('post', path)
 
-    def put(self, path):
-        return self.mapletree.req.put(path)
+    def put(self, path=''):
+        return self.req('put', path)
 
-    def delete(self, path):
-        return self.mapletree.req.delete(path)
+    def delete(self, path=''):
+        return self.req('delete', path)
 
-    def head(self, path):
-        return self.mapletree.req.head(path)
+    def head(self, path=''):
+        return self.req('head', path)
 
-    def options(self, path):
-        return self.mapletree.req.options(path)
+    def options(self, path=''):
+        return self.req('options', path)
 
-    def patch(self, path):
-        return self.mapletree.req.patch(path)
+    def patch(self, path=''):
+        return self.req('patch', path)
+
+    def req(self, method, path):
+        _path = self.request_route_context + path
+        fmt = 'Added a request endpoint for `{:8}: {}`'
+        logger.i(fmt.format(method.upper(), _path))
+        return self.mapletree.req(method, _path)
 
     def exc(self, exc_cls):
+        logger.i('Added an exception endpint for `{}`'.format(exc_cls))
         return self.mapletree.exc(exc_cls)
+
+    def group(self, path):
+        def _(f):
+            ctx_backup = self.request_route_context
+            self.request_route_context += path
+            f()
+            self.request_route_context = ctx_backup
+            return f
+        return _
 
     def validator(self, f):
         return Request.validator
