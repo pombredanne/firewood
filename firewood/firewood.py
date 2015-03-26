@@ -7,6 +7,7 @@ from importlib import import_module
 from mapletree import MapleTree, rsp
 from mapletree.driver import Driver
 from mapletree.request import Request
+from mapletree.response import Response
 from mapletree.routetree import ExceptionTree, RequestTree
 from mapletree.signing import Signing
 from . import logger
@@ -23,8 +24,6 @@ class Firewood(object):
 
         self.session_key = None
         self._signing = None
-
-        self.request_route_context = ''
 
     @property
     def signing(self):
@@ -179,23 +178,40 @@ class Firewood(object):
         return self.req('patch', path)
 
     def req(self, method, path):
-        _path = self.request_route_context + path
-        fmt = 'Added a request endpoint for `{:8}: {}`'
-        logger.i(fmt.format(method.upper(), _path))
-        return self.mapletree.req(method, _path)
+        def _(f):
+            fmt = 'Added a request endpoint for `{:8}: {}`'
+            logger.i(fmt.format(method.upper(), path))
+            return self.mapletree.req(method, path)(smart_response(f))
+        return _
 
     def exc(self, exc_cls):
-        logger.i('Added an exception endpint for `{}`'.format(exc_cls))
-        return self.mapletree.exc(exc_cls)
-
-    def group(self, path):
         def _(f):
-            ctx_backup = self.request_route_context
-            self.request_route_context += path
-            f()
-            self.request_route_context = ctx_backup
-            return f
+            fmt = 'Added an exception endpoint for `{}`'
+            logger.i(fmt.format(exc_cls))
+            return self.mapletree.exc(exc_cls)(f)
         return _
 
     def validator(self, f):
-        return Request.validator
+        return Request.validator(f)
+
+
+def smart_response(f):
+    def _(req):
+        r = f(req)
+
+        if isinstance(r, Response):
+            return r
+
+        if r is None:
+            return rsp()
+
+        if isinstance(r, int):
+            return rsp().code(r)
+
+        if isinstance(r, (str, unicode)):
+            return rsp().body(r)
+
+        if isinstance(r, dict):
+            return rsp().json(**r)
+
+    return _

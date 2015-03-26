@@ -8,8 +8,7 @@ from mapletree.response import Response
 def request_session(req):
     return VDict(fw.signing.unsign(req.cookie('SESSION', default='')))
 
-
-setattr(Request, 'session', _)
+setattr(Request, 'session', property(request_session))
 
 
 def response_session(rsp, data, expires=None, domain=None, secure=False):
@@ -20,9 +19,10 @@ def response_session(rsp, data, expires=None, domain=None, secure=False):
                       '/',
                       secure)
 
-
-setattr(Response, 'session', _)
+setattr(Response, 'session', response_session)
 
 
 def response_clear_session(rsp):
     return rsp.clear_cookie('SESSION')
+
+setattr(Response, 'clear_session', response_clear_session)
