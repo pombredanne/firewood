@@ -45,7 +45,7 @@ def _split_lines(msg, width_limit=None):
 
     else:
         for l in msg.splitlines():
-            if l <= width_limit:
+            if len(l) <= width_limit:
                 yield l
 
             else:

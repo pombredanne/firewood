@@ -1,0 +1,8 @@
+[paths]
+source = firewood
+
+[report]
+include = firewood*
+
+[html]
+directory = .coverage-html
