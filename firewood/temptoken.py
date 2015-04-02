@@ -10,13 +10,18 @@ class TempToken(object):
         self._life = life
 
     def encode(self, **kwargs):
-        kwargs['__expires__'] = int(time.time()) + self._life
+        if self._life:
+            kwargs['__expires__'] = int(time.time()) + self._life
+
+        else:
+            kwargs['__expires__'] = None
+
         return self._signing.sign(kwargs)
 
     def decode(self, token):
         data = self._signing.unsign(token)
         exp = data.pop('__expires__', 0)
-        if time.time() < exp:
+        if exp is None or time.time() < exp:
             return data
 
         raise TokenExpired()

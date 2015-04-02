@@ -5,8 +5,18 @@ import pytest
 import requests
 from firewood import fw
 
+
+@fw.config
+def session_key():
+    return {'development': 'sessionkey'}
+
+
+@fw.config
+def session_life():
+    return {'development': None}
+
+
 fw.autoloads.append('app')
-fw.session_key = 'sessionkey'
 fw.build()
 fw.run(background=True)
 time.sleep(1)
