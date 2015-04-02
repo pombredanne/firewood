@@ -2,11 +2,10 @@
 
 import os
 from mapletree import MapleTree, rsp, compat
-from mapletree.helpers.signing import Signing
 from mapletree.helpers.stagelocal import StageLocal
 from mapletree.helpers.threadlocal import ThreadLocal
 from . import logger
-from .exceptions import NoSessionKey
+from .temptoken import TempToken
 
 
 class Firewood(MapleTree):
@@ -15,7 +14,8 @@ class Firewood(MapleTree):
         self._autoloads.extend(['firewood.defaults'])
 
         self.session_key = None
-        self._session_signing = None
+        self.session_life = 60*60*24*30
+        self._session_token = None
 
         self.stage_f = lambda: os.environ.get('STAGE', 'development')
         self._stagelocal = None
@@ -31,16 +31,17 @@ class Firewood(MapleTree):
             return [compat.non_unicode_str('')]
 
     @property
-    def session_signing(self):
-        if self._session_signing is None:
+    def session_token(self):
+        if self._session_token is None:
             if self.session_key is not None:
-                self._session_signing = Signing(self.session_key)
+                self._session_token = TempToken(self.session_key,
+                                                self.session_life)
 
             else:
                 logger.e('session_key must be configured.')
                 raise NoSessionKey()
 
-        return self._session_signing
+        return self._session_token
 
     @property
     def config(self):
@@ -87,3 +88,7 @@ class Firewood(MapleTree):
 
     def exception(self, exc_cls):
         return self.exc.route(exc_cls)
+
+
+class NoSessionKey(Exception):
+    pass
