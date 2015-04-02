@@ -39,5 +39,5 @@ setup(
     packages=find_packages(),
     platforms='any',
     url='http://github.com/tomokinakamaru/firewood',
-    version='0.1',
+    version='0.1.1',
 )
