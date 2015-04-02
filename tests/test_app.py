@@ -1,5 +1,6 @@
 # coding:utf-8
 
+import time
 import pytest
 import requests
 from firewood import fw
@@ -8,6 +9,7 @@ fw.autoloads.append('app')
 fw.session_key = 'sessionkey'
 fw.build()
 fw.run(background=True)
+time.sleep(1)
 
 
 @pytest.mark.parametrize('method', ['get', 'post', 'put', 'delete',
