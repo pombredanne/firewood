@@ -9,6 +9,7 @@ from mapletree.defaults.request.argcontainer import ArgContainer
 from mapletree.helpers.signing import SigningException
 
 
+session_name = 'SESSION'
 session_token = TempToken(fw.config.session_key, fw.config.session_life)
 
 
@@ -23,7 +24,7 @@ def _(e):
 
 def get_session(req):
     try:
-        data = session_token.decode(req.cookie('SESSION', default=''))
+        data = session_token.decode(req.cookie(session_name, default=''))
 
     except (SigningException, TokenExpired) as e:
         raise InvalidSession(e)
@@ -32,17 +33,23 @@ def get_session(req):
         return ArgContainer(data)
 
 
-def set_session(rsp, data, expires=30*24*60, domain=None, secure=False):
-    return rsp.cookie('SESSION',
+def set_session(rsp,
+                data,
+                expires=fw.config.session_life,
+                domain=None,
+                secure=False):
+
+    exp = datetime.now + timedelta(seconds=expires) if expires else None
+    return rsp.cookie(session_name,
                       session_token.encode(**data),
-                      datetime.now() + timedelta(minutes=expires),
+                      exp,
                       domain,
                       '/',
                       secure)
 
 
 def clear_session(rsp):
-    return rsp.clear_cookie('SESSION')
+    return rsp.clear_cookie(session_name)
 
 
 setattr(Request, 'session', property(get_session))
