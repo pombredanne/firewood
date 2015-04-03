@@ -2,20 +2,16 @@
 
 import os
 from mapletree import MapleTree, rsp, compat
-from mapletree.helpers.signing import Signing
 from mapletree.helpers.stagelocal import StageLocal
 from mapletree.helpers.threadlocal import ThreadLocal
 from . import logger
-from .exceptions import NoSessionKey
+from .temptoken import TempToken
 
 
 class Firewood(MapleTree):
     def __init__(self):
         super(Firewood, self).__init__()
         self._autoloads.extend(['firewood.defaults'])
-
-        self.session_key = None
-        self._session_signing = None
 
         self.stage_f = lambda: os.environ.get('STAGE', 'development')
         self._stagelocal = None
@@ -29,18 +25,6 @@ class Firewood(MapleTree):
             logger.tb()
             start_response('500 Internal Server Error', [])
             return [compat.non_unicode_str('')]
-
-    @property
-    def session_signing(self):
-        if self._session_signing is None:
-            if self.session_key is not None:
-                self._session_signing = Signing(self.session_key)
-
-            else:
-                logger.e('session_key must be configured.')
-                raise NoSessionKey()
-
-        return self._session_signing
 
     @property
     def config(self):

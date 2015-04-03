@@ -6,6 +6,8 @@ from mapletree.defaults.request.argcontainer import (InsufficientError,
                                                      ValidationError)
 from mapletree.defaults.routings.requestrouting import (MethodNotAllowed,
                                                         NotFound)
+from sqlew.exceptions import (QueryFormatError,
+                              UnacceptableResultError)
 
 
 @fw.exception(Exception)
@@ -40,3 +42,15 @@ def _(e):
     key, val, err = e.args
     msg = 'invalid parameter value `{}` for `{}`'.format(key, val)
     return fw.rsp.code(400).json(message=msg)
+
+
+@fw.exception(QueryFormatError)
+def _(e):
+    logger.tb()
+    return fw.rsp.code(500).json(message='failed to bind values')
+
+
+@fw.exception(UnacceptableResultError)
+def _(e):
+    logger.tb()
+    return fw.rsp.code(400).json(message='bad access')

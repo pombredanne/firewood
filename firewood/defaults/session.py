@@ -2,10 +2,15 @@
 
 from datetime import datetime, timedelta
 from firewood import fw
+from firewood.temptoken import TempToken, TokenExpired
 from mapletree import rsp
 from mapletree.defaults.request import Request
 from mapletree.defaults.request.argcontainer import ArgContainer
 from mapletree.helpers.signing import SigningException
+
+
+session_name = 'SESSION'
+session_token = TempToken(fw.config.session_key, fw.config.session_life)
 
 
 class InvalidSession(Exception):
@@ -19,26 +24,32 @@ def _(e):
 
 def get_session(req):
     try:
-        data = fw.session_signing.unsign(req.cookie('SESSION', default=''))
+        data = session_token.decode(req.cookie(session_name, default=''))
 
-    except SigningException as e:
+    except (SigningException, TokenExpired) as e:
         raise InvalidSession(e)
 
     else:
         return ArgContainer(data)
 
 
-def set_session(rsp, data, expires=30*24*60, domain=None, secure=False):
-    return rsp.cookie('SESSION',
-                      fw.session_signing.sign(data),
-                      datetime.now() + timedelta(minutes=expires),
+def set_session(rsp,
+                data,
+                expires=fw.config.session_life,
+                domain=None,
+                secure=False):
+
+    exp = datetime.now + timedelta(seconds=expires) if expires else None
+    return rsp.cookie(session_name,
+                      session_token.encode(**data),
+                      exp,
                       domain,
                       '/',
                       secure)
 
 
 def clear_session(rsp):
-    return rsp.clear_cookie('SESSION')
+    return rsp.clear_cookie(session_name)
 
 
 setattr(Request, 'session', property(get_session))
