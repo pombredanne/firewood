@@ -2,11 +2,11 @@
 
 from datetime import datetime, timedelta
 from firewood import fw
-from firewood.temptoken import TempToken, TokenExpired
 from mapletree import rsp
-from mapletree.defaults.request import Request
+from mapletree.defaults.request.request import Request
 from mapletree.defaults.request.argcontainer import ArgContainer
 from mapletree.helpers.signing import SigningException
+from mapletree.helpers.temptoken import TempToken, ExpiredToken
 
 
 session_name = 'SESSION'
@@ -26,7 +26,7 @@ def get_session(req):
     try:
         data = session_token.decode(req.cookie(session_name, default=''))
 
-    except (SigningException, TokenExpired) as e:
+    except (SigningException, ExpiredToken) as e:
         raise InvalidSession(e)
 
     else:

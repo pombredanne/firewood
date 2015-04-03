@@ -5,7 +5,6 @@ from mapletree import MapleTree, rsp, compat
 from mapletree.helpers.stagelocal import StageLocal
 from mapletree.helpers.threadlocal import ThreadLocal
 from . import logger
-from .temptoken import TempToken
 
 
 class Firewood(MapleTree):
