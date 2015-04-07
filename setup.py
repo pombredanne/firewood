@@ -32,7 +32,7 @@ setup(
     description='WSGI app framework',
     install_requires=[
         'mapletree==0.7.2',
-        'sqlew==0.3.3'
+        'sqlew==0.3.4'
     ],
     license='MIT',
     long_description=long_description,
@@ -40,5 +40,5 @@ setup(
     packages=find_packages(),
     platforms='any',
     url='http://github.com/tomokinakamaru/firewood',
-    version='0.2.2',
+    version='0.2.3',
 )
