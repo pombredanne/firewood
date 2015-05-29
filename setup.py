@@ -31,8 +31,8 @@ setup(
     ],
     description='WSGI app framework',
     install_requires=[
-        'mapletree==0.7.2',
-        'sqlew==0.3.4'
+        'mapletree==1.0.0',
+        'sqlew==1.0.0'
     ],
     license='MIT',
     long_description=long_description,
